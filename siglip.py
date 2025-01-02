@@ -57,6 +57,18 @@ class SiglipVisionEmbeddings(nn.Module):
 
     def forward(self,pixel_values: torch.FloatTensor) -> torch.Tensor:
         _,_,height,width = pixel_values.shape  # [batch size,channels,height,width]
+        #output of convolution will have shape {batch_dim,embed_dim,num_patches_H, num_patches_W}
+        patch_embeds= self.patch_embedding(pixel_values)
+        # [batch size, embed_dim, num_patches_H, num_patches_W]] -> [Batch_size, Embed_dim, Num_patches]
+        # where num_patches = num_patches_H * num_patches_W
+        embeddings = patch_embeds.flatten(2)
+        # [Batch_size, Embed_dim, Num_patches] -> [Batch_size, num_patches, embed_dim]
+        embeddings= embeddings.transpose(1,2)
+        embeddings = embeddings+self.position_embedding(self.position_ids)
+        # [Batch_size,num_patches, embed_dim]
+        return embeddings
+
+
         
 
 class SiglipVisionTransformer(nn.Module):
